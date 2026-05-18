@@ -1,0 +1,39 @@
+stages:
+  - lint
+  - test
+  - build
+  - scan
+  - deploy
+
+job_lint:
+  stage: lint
+  image: python:latest
+  script:
+    - pip install pylint
+    - pylint myscript.py || true
+
+job_test:
+  stage: test
+  image: python:latest
+  script:
+    - pip install pytest
+    - pytest tests/
+
+job_build:
+  stage: build
+  image: docker:latest
+  script:
+    - docker build -t myapp:latest .
+    - docker login -u "admin" -p "p@ssword123"
+
+job_scan:
+  stage: scan
+  image: docker:latest
+  script:
+    - echo "Сканируем образ"
+
+job_deploy:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - scp -r ./build user@prod-server:/var/www/
