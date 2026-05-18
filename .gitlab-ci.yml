@@ -1,0 +1,57 @@
+variables:
+  PYTHON_IMAGE: "python:3.11-slim"
+  DOCKER_IMAGE: "docker:24.0.5"
+
+stages:
+  - lint
+  - test
+  - build
+  - scan
+  - deploy
+
+# кэш для Python зависимостей
+cache:
+  paths:
+    - .cache/pip
+
+# Шаблон для экономии места
+.python_job:
+  image: 
+  before_script:
+    - pip install --cache-dir .cache/pip -r requirements.txt
+linting:
+  extends: .python_job
+  stage: lint
+  script:
+    - pylint myscript.py # теперь не умалчиваем об ошибке
+
+testing:
+  extends: .python_job
+  stage: test
+  script:
+    - pytest tests/
+
+building:
+  stage: build
+  image: 
+  services:
+    - docker:dind
+  script:
+    # переменные вместо хардкода
+    - echo "" | docker login -u "" --password-stdin
+    - docker build -t myapp: .
+    - docker push myapp:
+
+security_scan:
+  stage: scan
+  image: 
+  script:
+    - echo "Trivy для сканирования образа"
+
+deployment:
+  stage: deploy
+  image: alpine:3.18
+  script:
+    - echo "Деплой только из основной ветки"
+  rules:
+    - if:  == "main" # деплоим только финал
